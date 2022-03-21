@@ -3,4 +3,6 @@ export interface Books {
     author: string
 }
 
-export type document = {id: string}
+export type Document = {id: string}
+
+export type TT = Books & Document;

@@ -1,4 +1,4 @@
-import express from "express";
+import express, {Request} from "express";
 import firebaseConfig from "./config/config";
 // import { initializeApp } from "firebase/app";
 //import { getAnalytics } from "firebase/analytics";
@@ -6,6 +6,7 @@ import firebaseConfig from "./config/config";
 import { getFirestore }  from "firebase-admin/firestore";
 import { initializeApp, cert } from "firebase-admin/app";
 import { formatCollection } from './utils';
+import { Books } from "./interfaces/interfaces";
 
 const serviceAccount = require('./cre.json');
 
@@ -26,7 +27,12 @@ app.use(cors());
 //const analytics = getAnalytics(init);
 const db = getFirestore();
 
-app.get('/prova', async({query: {title, author}}, res)=> {
+interface QueryModel {
+    title: string,
+    author: string
+}
+
+app.get('/prova', async({query: {title, author}}: Request<{},{},{},QueryModel>, res)=> {
     const books = db.collection("Books");
     // const filtTitle = title ? formatCollection(await books.where("title", ">=", title).where("title", "<=", title + "~").get()) : [];
     // const filtAuthor = author ? formatCollection(await books.where("author", ">=", author).where("author", "<=", author + "~").get()) : [];
@@ -42,9 +48,9 @@ app.get('/prova', async({query: {title, author}}, res)=> {
     // }, []);
     
     // const t = newResult.filter((element: any) => element.title.includes(title) && element.author.includes(author));
-    let resp = formatCollection(await books.get());
-    title && (resp = resp.filter(({title: elementTitlte}) => elementTitlte.includes(title)));
-    author && (resp = resp.filter(({author: elementAuthor}) => elementAuthor.includes(author)));
+    let resp = formatCollection<Books>(await books.get());
+    title && (resp = resp.filter(({title: ETitle}) => ETitle.includes(title)));
+    author && (resp = resp.filter(({author: EAuthor}) => EAuthor.includes(author)));
 
     // const resp = (!title && !author) ? formatCollection(await books.get()) : [];
     
@@ -63,7 +69,7 @@ app.post('/prova/:id', async({body: {title, author}, params: {id}}, res)=> {
 });
 
 app.post('/prova', async({body: {title, author}}, res)=> {
-    const resp = formatCollection(await db.collection("Books").get());
+    const resp = formatCollection<Books>(await db.collection("Books").get());
     const max = Math.max(...resp.map(({id}) => Number(id)) as number[]) + 1;
     const docRef = db.collection('Books').doc(String(max));
         await docRef.set({
